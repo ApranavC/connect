@@ -138,6 +138,36 @@ export function DashboardContent({ user }: DashboardContentProps) {
     return () => unsubscribe()
   }, [user.id])
 
+  // Handle browser back button to close meeting instead of leaving page
+  useEffect(() => {
+    if (meetingId) {
+      // Push state to trap back button
+      window.history.pushState(null, "", window.location.href)
+
+      const handlePopState = (event: PopStateEvent) => {
+        event.preventDefault()
+        // If in meeting, just close it
+        handleMeetingLeft()
+        // Replace history to remove the pushed state effectively? 
+        // Or just let the pop happen (which we prevented default?). 
+        // Actually, popstate event is fired *after* history entry changes.
+        // We want to just ensure we are back on the "Dashboard" state.
+        // The simplest logic is: if we catch a popstate while in meeting, we exit meeting.
+        // But since we pushed a state, the pop takes us back to "Main Dashboard".
+        // Perfect.
+      }
+
+      window.addEventListener("popstate", handlePopState)
+
+      return () => {
+        window.removeEventListener("popstate", handlePopState)
+        // Clean up history entry if component unmounts while in meeting?
+        // Might be tricky, but basic trapping is good enough for now.
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meetingId])
+
   const handleStartCall = async (targetUserId?: string) => {
     setLoading(true)
     setError(null)

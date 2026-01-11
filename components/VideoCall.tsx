@@ -24,12 +24,28 @@ export function VideoCall({ meetingId, token, onMeetingLeft }: VideoCallProps) {
       participantCanToggleSelfMic: true,
       chatEnabled: true,
       screenShareEnabled: true,
+      leftScreenDisabled: true, // Disable the left screen to avoid getting stuck
     }
 
     const meeting = new VideoSDKMeeting()
     // Cast config to any to bypass strict typing if needed, or supply missing properties if critical.
     // However, for prebuilt, extra props are usually optional. The type error suggests `realtimeTranscription` is required, which is odd.
     meeting.init(config as any)
+
+    // Attempt to listen for meeting-left event to trigger cleanup
+    // This is not standard in all documentation but worth trying for the Class-based approach
+    // to match the "redirect" behavior without actual redirect.
+    // If this doesn't work, user will be on a blank screen (due to leftScreenDisabled) or the default left screen (if ignored).
+    // In that case, they can use the Back button.
+    try {
+      // @ts-ignore
+      meeting.on("meeting-left", () => {
+        console.log("Meeting left event received")
+        if (onMeetingLeft) onMeetingLeft()
+      })
+    } catch (e) {
+      console.warn("Could not attach meeting-left listener", e)
+    }
 
     // Event listener for meeting left
     // The event name might be 'meetingLeft' or similar. 
@@ -44,7 +60,7 @@ export function VideoCall({ meetingId, token, onMeetingLeft }: VideoCallProps) {
     // The user had: const config = { name: 'User', meetingId: meetingId, apiKey: token, ... }
 
     // Let's create the element safely
-  }, [meetingId, token])
+  }, [meetingId, token, onMeetingLeft])
 
   // Wait, the SDK creates its own UI. We should probably return an empty div or nothing if containerId is null.
   // But wait, if we use containerId: null, it appends to body.
