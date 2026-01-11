@@ -279,6 +279,7 @@ export function DashboardContent({ user }: DashboardContentProps) {
         <VideoCall
           meetingId={meetingId}
           token={token}
+          redirectUrl={typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined}
           onMeetingLeft={() => {
             setMeetingId(null)
             setToken(null)

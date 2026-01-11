@@ -6,16 +6,17 @@ interface VideoCallProps {
   meetingId: string
   token: string
   onMeetingLeft?: () => void
+  redirectUrl?: string
 }
 
-export function VideoCall({ meetingId, token, onMeetingLeft }: VideoCallProps) {
+export function VideoCall({ meetingId, token, onMeetingLeft, redirectUrl }: VideoCallProps) {
   const [meetingUrl, setMeetingUrl] = useState('')
 
   useEffect(() => {
     if (!meetingId || !token) return
 
     const name = 'User' // Could be passed as prop later
-    const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : ''
+    const finalRedirectUrl = redirectUrl || (typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : '')
 
     const params = new URLSearchParams({
       name: name,
@@ -28,12 +29,12 @@ export function VideoCall({ meetingId, token, onMeetingLeft }: VideoCallProps) {
       chatEnabled: "true",
       screenShareEnabled: "true",
       joinWithoutUserInteraction: "true",
-      redirectOnLeave: redirectUrl,
+      redirectOnLeave: finalRedirectUrl,
     })
 
     const url = `https://embed.videosdk.live/rtc-js-prebuilt/0.3.43/?${params.toString()}`
     setMeetingUrl(url)
-  }, [meetingId, token])
+  }, [meetingId, token, redirectUrl])
 
   if (!meetingUrl) return <div className="w-full h-screen bg-black flex items-center justify-center text-white">Loading Video Call...</div>
 
