@@ -19,23 +19,14 @@ export interface CreateRoomResponse {
 /**
  * Create a VideoSDK room with 10-minute auto-close configuration
  */
-export async function createVideoRoom(
-  token: string,
-  customRoomId?: string
-): Promise<CreateRoomResponse> {
+export async function createVideoRoom(token: string): Promise<CreateRoomResponse> {
   const response = await fetch('https://api.videosdk.live/v2/rooms', {
     method: 'POST',
     headers: {
       'Authorization': token,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      customRoomId,
-      autoCloseConfig: {
-        type: 'session-end-and-deactivate',
-        duration: 10, // 10 minutes
-      },
-    }),
+    body: JSON.stringify({}), // Send empty object for default params
   })
 
   if (!response.ok) {

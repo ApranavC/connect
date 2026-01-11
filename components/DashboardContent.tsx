@@ -183,13 +183,13 @@ export function DashboardContent({ user }: DashboardContentProps) {
 
       const { token: videoToken } = await tokenResponse.json()
 
-      // Step 2: Use Caller Email as Room ID (User Request)
-      // const room = await createVideoRoom(videoToken, customRoomId) // Skipped in favor of email
-      const roomId = user.email
+      // Step 2: Create a new room using the VideoSDK API
+      const roomResponse = await createVideoRoom(videoToken)
+      const roomId = roomResponse.roomId
 
-      if (!roomId) throw new Error('User email not found')
+      if (!roomId) throw new Error('Failed to create room')
 
-      console.log('Using caller email as meetingId:', roomId)
+      console.log('Created new room:', roomId)
 
       // Step 3: Trigger the call for the other user (if targetUserId is provided)
       if (targetUserId) {
