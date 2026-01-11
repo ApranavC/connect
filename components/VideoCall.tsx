@@ -1,7 +1,6 @@
 'use client'
 
-import { VideoSDKMeeting } from '@videosdk.live/rtc-js-prebuilt'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 interface VideoCallProps {
   meetingId: string
@@ -10,71 +9,44 @@ interface VideoCallProps {
 }
 
 export function VideoCall({ meetingId, token, onMeetingLeft }: VideoCallProps) {
+  const [meetingUrl, setMeetingUrl] = useState('')
+
   useEffect(() => {
-    const config = {
-      name: 'User',
+    if (!meetingId || !token) return
+
+    const name = 'User' // Could be passed as prop later
+    const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : ''
+
+    const params = new URLSearchParams({
+      name: name,
       meetingId: meetingId,
-      apiKey: token, // Used as token based on previous logic, but let's be explicit and providing `token` property is safer
       token: token,
-      containerId: 'video-sdk-container', // "null" to create its own full-screen container
-      redirectOnLeave: undefined, // Explicitly undefined to prevent auto-redirect
-      micEnabled: true,
-      webcamEnabled: true,
-      participantCanToggleSelfWebcam: true,
-      participantCanToggleSelfMic: true,
-      chatEnabled: true,
-      screenShareEnabled: true,
-      leftScreenDisabled: true, // Disable the left screen to avoid getting stuck
-    }
+      micEnabled: "true",
+      webcamEnabled: "true",
+      participantCanToggleSelfWebcam: "true",
+      participantCanToggleSelfMic: "true",
+      chatEnabled: "true",
+      screenShareEnabled: "true",
+      joinWithoutUserInteraction: "true",
+      redirectOnLeave: redirectUrl,
+    })
 
-    const meeting = new VideoSDKMeeting()
-    // Cast config to any to bypass strict typing if needed, or supply missing properties if critical.
-    // However, for prebuilt, extra props are usually optional. The type error suggests `realtimeTranscription` is required, which is odd.
-    meeting.init(config as any)
+    const url = `https://embed.videosdk.live/rtc-js-prebuilt/0.3.43/?${params.toString()}`
+    setMeetingUrl(url)
+  }, [meetingId, token])
 
-    // Attempt to listen for meeting-left event to trigger cleanup
-    // This is not standard in all documentation but worth trying for the Class-based approach
-    // to match the "redirect" behavior without actual redirect.
-    // If this doesn't work, user will be on a blank screen (due to leftScreenDisabled) or the default left screen (if ignored).
-    // In that case, they can use the Back button.
-    try {
-      // @ts-ignore
-      meeting.on("meeting-left", () => {
-        console.log("Meeting left event received")
-        if (onMeetingLeft) onMeetingLeft()
-      })
-    } catch (e) {
-      console.warn("Could not attach meeting-left listener", e)
-    }
-
-    // Event listener for meeting left
-    // The event name might be 'meetingLeft' or similar. 
-    // Based on search, it's often handled via callbacks or just by observing the close.
-    // However, prebuilt often has an `onMeetingLeft` callback in config if not an event.
-    // Documentation says: "redirectOnLeave" is a property.
-    // But we want to handle it manually.
-    // NOTE: The prebuilt SDK is a wrapper. If we don't pass redirectOnLeave, it might show a "Left" screen with a button.
-    // We want to hook into that.
-
-    // Actually, looking at the previous error log "meetingId not provided", the structure was likely correct but maybe the value was null.
-    // The user had: const config = { name: 'User', meetingId: meetingId, apiKey: token, ... }
-
-    // Let's create the element safely
-  }, [meetingId, token, onMeetingLeft])
-
-  // Wait, the SDK creates its own UI. We should probably return an empty div or nothing if containerId is null.
-  // But wait, if we use containerId: null, it appends to body.
-  // We want it to be contained if possible, or handle cleanup.
-
-  // Cleanup isn't straightforward with this SDK as it doesn't expose a clear 'destroy' method in the docs I found,
-  // but removing the container usually helps.
-  // We need to handle the "Leave" action. The prebuilt UI has a leave button.
-  // If we can't hook into it easily, we might need to rely on the user clicking "Back" or us polling status?
-  // No, the SDK likely emits events? 
-  // Actually, I should probably search for "VideoSDK Prebuilt events" to be sure.
-  // But for now, let's just get it rendering without the iframe error.
+  if (!meetingUrl) return <div className="w-full h-screen bg-black flex items-center justify-center text-white">Loading Video Call...</div>
 
   return (
-    <div id="video-sdk-container" className="w-full h-screen bg-black" />
+    <div className="w-full h-screen bg-black">
+      <iframe
+        src={meetingUrl}
+        allow="camera; microphone; fullscreen; display-capture; clipboard-read; clipboard-write"
+        width="100%"
+        height="100%"
+        style={{ border: 0 }}
+        title="Video Call"
+      />
+    </div>
   )
 }
