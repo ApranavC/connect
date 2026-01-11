@@ -14,7 +14,8 @@ export function VideoCall({ meetingId, token, onMeetingLeft }: VideoCallProps) {
     const config = {
       name: 'User',
       meetingId: meetingId,
-      apiKey: token, // The documentation sometimes refers to this as apiKey, but for JWT it's often the token. Let's try apiKey first as per docs, but assign the token value.
+      apiKey: token, // Used as token based on previous logic, but let's be explicit and providing `token` property is safer
+      token: token,
       containerId: 'video-sdk-container', // "null" to create its own full-screen container
       redirectOnLeave: undefined, // Explicitly undefined to prevent auto-redirect
       micEnabled: true,
